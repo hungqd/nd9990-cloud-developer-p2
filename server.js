@@ -13,23 +13,26 @@ const port = process.env.PORT || 8082;
 // Use the body parser middleware for post requests
 app.use(bodyParser.json());
 
-// @TODO1 IMPLEMENT A RESTFUL ENDPOINT
-// GET /filteredimage?image_url={{URL}}
-// endpoint to filter an image from a public url.
-// IT SHOULD
-//    1
-//    1. validate the image_url query
-//    2. call filterImageFromURL(image_url) to filter the image
-//    3. send the resulting file in the response
-//    4. deletes any files on the server on finish of the response
-// QUERY PARAMATERS
-//    image_url: URL of a publicly accessible image
-// RETURNS
-//   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
 
-/**************************************************************************** */
+app.get("/filteredimage", async (req, res) => {
+  let imageUrl = req.query["image_url"]
 
-//! END @TODO1
+  if (!imageUrl) {
+    return res.status(400).send("Image URL is required");
+  }
+
+  try {
+    let outpath = await filterImageFromURL(imageUrl);
+    res.status(200).sendFile(outpath, async (err) => {
+      if (err) {
+        console.log("Send file error: " + err);
+      }
+      await deleteLocalFiles([outpath]);
+    });
+  } catch (e) {
+    res.status(422).send(`${e}`);
+  }
+});
 
 // Root Endpoint
 // Displays a simple message to the user
